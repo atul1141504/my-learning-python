@@ -28,6 +28,9 @@ MyThirdString = " we will learn all about Python."
 concatenated_String = my_first_string + mySecondString + MyThirdString
 print(concatenated_String)          # 1. Concatenation
 
+''' Result: String Concatenation
+    Hi!, Welcome to the world of Python.This year-2023, we will learn all about Python. '''
+
 # 2. String Formatting - placeholders using the modulo % character.
     # Method_1 = using %s or str()
 _string1 = "Hello %s! "
@@ -41,6 +44,10 @@ _string2 = "Its a %r weather %s."
 _formattedStringWIthPlaceholder = _string1%("Everyone") + _string2%("nice", "outside")
 print(_formattedStringWIthPlaceholder)
 
+''' Result: String Formatting - %s and %r
+    Hello Everyone! Its a nice weather outside.
+    Hello Everyone! Its a 'nice' weather outside.'''
+
         # Padding and Precision of Floating Point Numbers
 print("\nPadding and Precision of Floating Point Numbers")
 print('Floating point numbers: %5.2f' %(13.144))
@@ -48,6 +55,13 @@ print('Floating point numbers: %1.0f' %(13.144))
 print('Floating point numbers: %1.5f' %(13.144))
 print('Floating point numbers: %10.2f' %(13.144))
 print('Floating point numbers: %25.2f' %(13.144))
+
+''' Result: Padding and Precision of Floating Point Numbers
+    Floating point numbers: 13.14
+    Floating point numbers: 13
+    Floating point numbers: 13.14400
+    Floating point numbers:      13.14
+    Floating point numbers:                     13.14'''
 
 # 3. String Formatting - using the .format() string method.
     # 'String here {} then also {}'.format('something1','something2')
@@ -60,6 +74,7 @@ print(_formattedStringWIthDotFormat)
 _String = "Hello {2}!, Its a {0} weather {1}."
         # a. Inserted objects can be called by index position:
 _string_index_position = _String.format("hot","outside","All")
+print(_string_index_position)
 
         # b. Inserted objects can be assigned keywords:
 _String = "Hello {c}!, Its a {b} weather {a}."
@@ -70,6 +85,12 @@ print(_string_assign_keyword)
 _String = "A {p} saved is a {p} earned."
 _string_keyword_reuse = _String.format(p ="penny")
 print(_string_keyword_reuse)
+
+''' Result
+    Dot Format - Hello Everyone! Its a nice weather outside.
+    Hello All!, Its a hot weather outside.
+    Hello All!, Its a hot weather outside.
+    A penny saved is a penny earned.'''
 
         # d. Alignment, padding and precision with .format()
             # Within the curly braces we can assign field lengths, left/right alignments, rounding parameters and more
@@ -88,6 +109,18 @@ print('{0:<8} | {1:^8} | {2:>8}'.format(11,22,33.1))
 print("\nPadding Characters")
 print('{0:=<8} | {1:-^8} | {2:.>8}'.format('Left','Center','Right'))
 print('{0:=<8} | {1:-^8} | {2:.>8}'.format(11,22,33))
+''' Result: 
+    Alignment, padding and precision with .format()
+    Fruit    | Quantity
+    Apples   |       3.0
+    Oranges  |        10
+
+    Left     |  Center  |    Right
+    11       |    22    |     33.1
+
+    Padding Characters
+    Left==== | -Center- | ...Right
+    11====== | ---22--- | ......33'''
 
             # Field widths and float precision are handled in a way similar to placeholders. The following two print statements are equivalent:
             # format = "string.Length.Precisionf" => string%10.2f
@@ -97,6 +130,11 @@ _string1 = "This is my ten-character, two-decimal number:%10.2f"
 _string2 = 'This is my ten-character, two-decimal number:{0:10.2f}'
 print(_string1%num)
 print(_string2.format(num))
+
+''' Result: Field widths and float precision
+    Field widths and float precision
+    This is my ten-character, two-decimal number:     13.58
+    This is my ten-character, two-decimal number:     13.58'''
 
 # 4. String Formatting - The newest method, introduced with Python 3.6, uses formatted string literals, called f-strings.
     # Formatted String Literals (f-strings)
@@ -123,3 +161,15 @@ print(f"My 10 character, four decimal number is:{num:{10}.{6}}")
 num = 23.45
 print("My 10 character, four decimal number is:{0:10.4f}".format(num))
 print(f"My 10 character, four decimal number is:{num:10.4f}")
+
+''' Result: Formatted String Literals (f-strings)
+    Hi!, I am Atul Patel.
+    Hi!, I am 'Atul Patel'.
+
+    Formatted Floats Literals (f-strings)
+    My 10 character, four decimal number is:   23.4568
+    My 10 character, four decimal number is:   23.4568
+    My 10 character, four decimal number is:   23.4500
+    My 10 character, four decimal number is:     23.45
+    My 10 character, four decimal number is:   23.4500
+    My 10 character, four decimal number is:   23.4500'''
