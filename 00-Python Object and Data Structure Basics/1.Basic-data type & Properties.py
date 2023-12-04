@@ -5,7 +5,7 @@
     5. Dictonaries      6. Tuples               7. Sets             8. Booleans
 
     >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'''
-
+print("\n-->Types of Objects/Data in Python")
 a = 1234                                    
 b = 1234.12                                 
 c = 'Atul Patel'                            
@@ -16,18 +16,28 @@ g = (10, "It's me", 120.01)
 h = {"a","b"}
 i = True
 
-print("type of a : ", type(a), "\n", "type of b : ", type(b), "\n", "type of c : ", type(c), "\n", "type of d : ", type(d))
-print("type of e : ", type(e), "\n", "type of f : ", type(f), "\n", "type of g : ", type(g), "\n", "type of h : ", type(h))
-print("type of i : ", type(i))
+print("type of a : ", type(a), "\ntype of b : ", type(b), "\ntype of c : ", type(c), "\ntype of d : ", type(d))
+print("type of e : ", type(e), "\ntype of f : ", type(f), "\ntype of g : ", type(g), "\ntype of h : ", type(h), "\ntype of i : ", type(i))
+
+''' Response:
+    type of a :  <class 'int'> 
+    type of b :  <class 'float'> 
+    type of c :  <class 'str'> 
+    type of d :  <class 'str'>
+    type of e :  <class 'list'> 
+    type of f :  <class 'dict'> 
+    type of g :  <class 'tuple'> 
+    type of h :  <class 'set'> 
+    type of i :  <class 'bool'> '''
 
 ''' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     Arithmetic Computation
     >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'''
-print("\n","Arithmetic Computation")
-a=25/4; print("25/4 Division  - ", a)
-b=25%4; print("25%4 Remainder - ", b)
-c=24%4; print("24%4 Remainder - ", c)
-d=2**3; print("2**3 Power     - ", d)
+print("\n-->Arithmetic Computation")
+a=25/4; print("25/4 Division  - ", a) # 25/4 Division  -  6.25
+b=25%4; print("25%4 Remainder - ", b) # 25%4 Remainder -  1
+c=24%4; print("24%4 Remainder - ", c) # 24%4 Remainder -  0
+d=2**3; print("2**3 Power     - ", d) # 2**3 Power     -  8
 
 ''' >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     String Handling - An Ordered, Immutable Sequence of data. Hence allows Indexing, Slicing.
@@ -62,7 +72,7 @@ d=2**3; print("2**3 Power     - ", d)
 
 my_first_string = "Hi!, Welcome to the world of Python."
 
-print("\n","String Handling - Basics")
+print("\n-->String Handling - Basics")
 mySecondString = "This year-"
 MyThirdString = " we will learn all about Python."
 concatenated_String = my_first_string + mySecondString + '20' + str(23) + "," + MyThirdString
@@ -74,11 +84,23 @@ print(my_first_string.lower())      # 5. String Attributes - Lower Case
 print(my_first_string.split())      # 6. String Attributes - Split
 print(my_first_string.split('t'))   # 7. String Attributes - Split at any specific character but character gets excluded
 
-print("\n","String Handling - Indexing")
-print(my_first_string[0], "\n", my_first_string[1], "\n", my_first_string[2])   # 1. Forward Indexing
-print(my_first_string[0], "\n", my_first_string[-1], "\n", my_first_string[-2]) # 2. Reverse Indexing
+''' Response: String Handling - Basics
+    Hi!, Welcome to the world of Python.This year-2023, we will learn all about Python.
+    Wooow!
+    HI!, WELCOME TO THE WORLD OF PYTHON.
+    hi!, welcome to the world of python.
+    ['Hi!,', 'Welcome', 'to', 'the', 'world', 'of', 'Python.']
+    ['Hi!, Welcome ', 'o ', 'he world of Py', 'hon.'] '''
 
-print("\n","String Handling - Slicing")
+print("\n-->String Handling - Indexing")
+print('ind=0:',my_first_string[0], "ind=1:",my_first_string[1], "ind=2:",my_first_string[2])   # 1. Forward Indexing
+print('ind=0:',my_first_string[0], "ind=-1:", my_first_string[-1], "ind=-2:", my_first_string[-2]) # 2. Reverse Indexing
+
+''' Response: Indexing
+    ind=0: H ind=1: i ind=2: !
+    ind=0: H ind=-1: . ind=-2: n '''
+
+print("\n-->String Handling - Slicing")
 print(my_first_string[8])
 print(my_first_string[8:])          # 1. Slicing to get string starting from a position thru the end
 print(my_first_string[11])      
@@ -90,3 +112,13 @@ print(my_first_string[::2])         # 5. Slicing to get a part of string with ST
 print(my_first_string[::-1])        # 6. Slicing to Reverse String
 #print(my_first_string[::0])        # Slice STep can't be Zero
 
+''' Response: String Handling - Slicing
+    c
+    come to the world of Python.
+    e
+    Hi!, Welcom
+    d
+    come to the worl
+    cm otewr
+    H! ecm otewrdo yhn
+    .nohtyP fo dlrow eht ot emocleW ,!iH '''
