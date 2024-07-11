@@ -1,0 +1,634 @@
+Public autECLOIA As Object
+Public autECLPSObj As Object
+Public autECLConnList As Object
+Public SessObj As Object
+Public PfShow As Boolean
+Public Sh1 As Worksheet, Sh2 As Worksheet, Sh3 As Worksheet, Sh4 As Worksheet, Sh5 As Worksheet
+Public Racfid As String, LPARname As String, LparRACFid As String
+Public Sys As Object
+Public Sess As Object
+Public MyScreen As Object
+Public sessWait As Object
+Public nomodule As String
+Public Waits As Object
+Public Function GetPCOMMConnection() As Boolean
+
+' This gets the System object
+    Set Sys = CreateObject("EXTRA.System")
+' Assumes an open session
+        On Error Resume Next
+        Set Sess = Sys.Sessions.Item(1)
+        On Error GoTo 0
+        If IsEmpty(Sess) Or (Sess Is Nothing) Then
+           MsgBox "Either Reflection session is unavailable or IP address Mismatch!" _
+                   & vbNewLine & "Kindly open Reflection & Tool sheet from the same shared path." _
+                   & vbNewLine & "" _
+                   & vbNewLine & "                                                    Thankyou!!"
+           End
+        End If
+        
+        MsgBox "Activating session " + Sess.Name + "."
+        Sess.Activate
+        Set MyScreen = Sess.Screen
+'        Set sessWait = Sys.Waits
+' The following If statement displays status messages pertaining to
+' your host connection.
+    If MyScreen.OIA.ConnectionStatus = 1 Then
+        MsgBox "This session currently connected to a mainframe application."
+        GetPCOMMConnection = True
+    ElseIf MyScreen.OIA.ConnectionStatus = 2 Then
+        MsgBox "The control program has established contact."
+        GetPCOMMConnection = True
+    ElseIf MyScreen.OIA.ConnectionStatus = 3 Then
+        MsgBox "This session is not connected to a mainframe application."
+        GetPCOMMConnection = False
+    End If
+End Function
+
+Private Sub CommandButton22_Click()
+   ThisWorkbook.Sheets("Output Of the FtPrint Check").Activate
+End Sub
+
+Private Sub CommandButton23_Click()
+    ThisWorkbook.Sheets("User Manual").Activate
+End Sub
+
+Private Sub Footprint_Click()
+
+If GetPCOMMConnection = False Then
+   Exit Sub
+End If
+
+'DECLARATION OF STRINGS AND VARIABLES
+Dim modulename As String
+Dim pdsname As String
+Dim pdsname2 As String
+Dim strScreenCheck2 As String
+Dim strScreenCheck3 As String
+Dim strScreenCheck5 As String
+Dim strScreenCheck6 As String
+Dim strScreenCheck7 As String
+Dim strScreenCheck8 As String
+Dim strScreenCheck9 As String
+Dim cpbkfile As String
+Dim COBFTFILE As String
+Dim FTPRINTFILE As String
+Dim ERROR1 As String
+Dim ERROR2 As String
+Dim OUTSTR As String
+Dim CBLBASEPDS As String
+Dim RowCount As Integer
+Dim InvCol As Integer
+Dim InvRow As Integer
+Dim InvInd As String
+Dim a As Integer
+Dim b As Integer
+Dim x As Integer
+Dim y As Integer
+Dim i As Integer
+Dim j As Integer
+Dim K As Integer
+Dim m As Integer
+Dim Skip_Ind As String
+Dim Hold_Str_Bold As String
+a = 0
+b = 0
+x = 5
+y = 5
+i = 5
+j = 5
+K = 1
+InvRow = 1
+InvCol = 1
+RowCount = 1
+InvInd = "Y"
+Skip_Ind = "N"
+Do While Cells(x, 5).Value <> ""
+   x = x + 1
+Loop
+a = x - 1
+
+'CHECK FOR MANDATORY INPUT FIELDS
+
+If Range("D5").Value = "" Then
+   MyScreen.WaitHostQuiet (1000)
+   MsgBox "No Component is provided. Please Enter the same and then proceed."
+   Exit Sub
+Else
+   Do While y < a
+      If (Cells(y, 4).Value = "") Then
+         MyScreen.WaitHostQuiet (1000)
+         MsgBox "No Component is provided. Please Enter the same and then proceed."
+         Exit Sub
+      End If
+      y = y + 1
+   Loop
+End If
+
+If (ComboBox2.Value = "PJA1") Or (ComboBox2.Value = "PJA2") Or (ComboBox2.Value = "PJA3") Or (ComboBox2.Value = "PJA4") Or (ComboBox2.Value = "PJB1") Or (ComboBox2.Value = "PJB2") Or (ComboBox2.Value = "PJB3") Or (ComboBox2.Value = "PJB4") Then
+    If Stage.Value = "" Then
+       MyScreen.WaitHostQuiet (1000)
+       MsgBox "Please enter either Unit or Devl when selecting either of the following region: PJA1 or PJA2 or PJA3 or PJA4 or PJB1 or PJB2 or PJB3 or PJB4"
+       Exit Sub
+    End If
+ElseIf ComboBox2.Value = "" Then
+       MsgBox "Please enter region details!!"
+       Exit Sub
+End If
+'-------------------------------------------------------------------------------------------------------------------------------------
+
+     'CHECK IF ON TSO SERVICE MENU SCREEN
+
+MyScreen.WaitHostQuiet (1000)
+strScreenCheck2 = MyScreen.GetString(1, 1, 80)
+strScreenCheck3 = MyScreen.GetString(2, 1, 80)
+If Not (InStr(1, strScreenCheck2, "ANTHEM  ST LOUIS  TSO SERVICE MENU") > 1) Then
+        If Not (InStr(1, strScreenCheck3, "ANTHEM  ST LOUIS  TSO SERVICE MENU") > 1) Then
+            MsgBox "Please Navigate to TSO SERVICE MENU and try again"
+            Exit Sub
+        End If
+End If
+
+'>>>>>>>>>>>>>>>>>>>>>>>>LOGGING STARTS<<<<<<<<<<<<<<<<<<<<<<<<<<
+Do While Cells(i, 4).Value <> ""
+   i = i + 1
+Loop
+b = i - 1 'TOTAL COUNT OF MODULES ENTERED
+a = i - 5
+'MsgBox a
+
+'------Call Create Inventory list for the entered copyooks---------
+Sheets("Output Of the FtPrint Check").Cells().Value = ""
+Sheets("Impacted Elements").Cells().Value = ""
+If (ComboBox2.Value = "PJA1") Or (ComboBox2.Value = "PJA2") Or (ComboBox2.Value = "PJA3") Or (ComboBox2.Value = "PJA4") Or (ComboBox2.Value = "PJB1") Or (ComboBox2.Value = "PJB2") Or (ComboBox2.Value = "PJB3") Or (ComboBox2.Value = "PJB4") Then
+       Region = "DEVELOP "
+       If Stage.Value = "DEVL" Then
+              REGION_STAGE = "D"
+          Else
+              REGION_STAGE = "U"
+       End If
+   Else
+       Region = "INTEG   "
+       REGION_STAGE = "I"
+       Stage.Value = "INT"
+End If
+Call InventoryLst
+'GoTo InventoryLst
+'-----------------------------End----------------------------------
+
+'******************************************************************
+'*************************Check Footprint**************************
+'******************************************************************
+'Continue1:
+'InvInd = "N"
+i = 1
+j = 1
+MyScreen.WaitHostQuiet (1000)
+'-------------Clear the Footprint File Section----------------
+Do While Sheets("Impacted Elements").Cells(i, j).Value <> ""
+    MyScreen.PutString "DL", 2, 15
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    MyScreen.PutString "PROJ.FTPRINT.COBOLII.CHGFILE1                 ", 10, 24
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    MyScreen.PutString "V", 8, 2
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    strScreenCheck5 = MyScreen.GetString(3, 58, 22)
+    If strScreenCheck5 = "No members in data set" Then
+       MyScreen.SendKeys "<Pf3>"
+       MyScreen.SendKeys "<Pf3>"
+       MyScreen.WaitHostQuiet (1000)
+    Else
+       MyScreen.PutString "S * D", 4, 15
+       MyScreen.SendKeys "<enter>"
+       MyScreen.WaitHostQuiet (1000)
+       MyScreen.PutString "/", 11, 6
+       MyScreen.SendKeys "<enter>"
+       MyScreen.SendKeys "<Pf3>"
+       MyScreen.SendKeys "<Pf3>"
+       MyScreen.SendKeys "<Pf3>"
+       MyScreen.WaitHostQuiet (1000)
+    End If
+    '----------End Clear Footprint File Section-------------------
+    MyScreen.PutString "=EN", 2, 15
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    'MyScreen.PutString " 1;1;1", 2, 16
+    MyScreen.SendKeys "<enter>"
+    MyScreen.WaitHostQuiet (1000)
+    MyScreen.PutString " 1;1;1", 2, 16
+    MyScreen.SendKeys "<enter>"
+NEXT_COPYBOOK:
+    ERROR1 = ""
+    ERROR2 = ""
+    Do While ((Sheets("Impacted Elements").Cells(i, j).Value) <> "")
+     If Sheets("Impacted Elements").Cells(2, j).Value <> "" Then
+       If (Sheets("Impacted Elements").Cells(i, j).Value) <> "" Then
+          modulename = (Sheets("Impacted Elements").Cells(i, j).Value)
+       End If
+       If i = "1" Then
+          ModuleType = "INCLUDE "
+          PrintFile = "'PROJ.FTPRINT.CPYBOOK.CHGFILE1'               "
+          Else
+          ModuleType = "COBOLII "
+          PrintFile = "'PROJ.FTPRINT.COBOLII.CHGFILE1'               "
+       End If
+       MyScreen.WaitHostQuiet (1000)
+       MyScreen.PutString Region, 16, 21
+       MyScreen.PutString ComboBox2.Value, 17, 21
+       MyScreen.PutString "*   ", 17, 25
+       MyScreen.PutString "*       ", 18, 21
+       MyScreen.PutString "          ", 12, 15
+       MyScreen.PutString modulename, 12, 15
+       MyScreen.PutString ModuleType, 13, 15
+       MyScreen.PutString REGION_STAGE, 19, 21
+       MyScreen.WaitHostQuiet (1000)
+       MyScreen.PutString "Y", 16, 71
+       MyScreen.PutString "N", 17, 71
+       MyScreen.PutString "N", 18, 71
+       MyScreen.PutString "N", 19, 71
+       MyScreen.PutString "Y", 20, 71
+       MyScreen.PutString "Y", 21, 71
+       MyScreen.WaitHostQuiet (1000)
+       MyScreen.SendKeys "<enter>"
+       MyScreen.SendKeys "<enter>"
+       MyScreen.SendKeys "<enter>"
+       MyScreen.WaitHostQuiet (1000)
+       ERROR1 = MyScreen.GetString(1, 64, 16)
+       ERROR2 = MyScreen.GetString(1, 60, 20)
+       If (ERROR1 = "NO ELEMENT MATCH" Or ERROR2 = "NO ELEMENTS SELECTED") Then
+          If i = 1 Then
+              'MsgBox ("COPYBOOK " + modulename + " NOT FOUND IN THE SPECIFIED REGION." _
+              '        & vbNewLine & "PLEASE VALIDATE AND CONTINUE.")
+              Sheets("Output Of the FtPrint Check").Cells(K + 4, 5).Value = Sheets("Impacted Elements").Cells(1, j).Value + "-->COPYBOOK IS NOT FOUND."
+              K = K + 1
+              Skip_Ind = "Y"
+             Exit Do
+          End If
+       End If
+       If ERROR1 <> "NO ELEMENT MATCH" Then
+          Skip_Ind = "N"
+          MyScreen.WaitHostQuiet (1000)
+          If ModuleType = "INCLUDE " Then
+             MyScreen.PutString "C", 7, 2
+          End If
+          If ModuleType = "COBOLII " Then
+             MyScreen.PutString "LL", 7, 2
+          End If
+          MyScreen.WaitHostQuiet (1000)
+          MyScreen.SendKeys "<enter>"
+          MyScreen.WaitHostQuiet (1000)
+          If MyScreen.GetString(1, 61, 19) = "NO CHANGES DETECTED" Then
+             If i = 1 Then
+                Sheets("Output Of the FtPrint Check").Cells(K + 4, 5).Value = Sheets("Impacted Elements").Cells(1, j).Value + "-->NO CHANGES FOUND FOR THIS COPYBOOK."
+                K = K + 1
+                Skip_Ind = "Y"
+                MyScreen.SendKeys "<Pf3>"
+                Exit Do
+             End If
+          End If
+          MyScreen.SendKeys "<enter>"
+          MyScreen.SendKeys "<enter>"
+          MyScreen.WaitHostQuiet (1000)
+          GetENfile = MyScreen.GetString(3, 12, 33)
+          MyScreen.WaitHostQuiet (1000)
+          MyScreen.PutString "                                              ", 14, 25
+          MyScreen.PutString "start dl", 4, 15
+          MyScreen.WaitHostQuiet (1000)
+          MyScreen.SendKeys "<enter>"
+          MyScreen.WaitHostQuiet (1000)
+          MyScreen.PutString "                                              ", 10, 24
+          MyScreen.PutString GetENfile, 10, 24
+          MyScreen.WaitHostQuiet (1000)
+          MyScreen.SendKeys "<enter>"
+          MyScreen.WaitHostQuiet (1000)
+          'COPY TEMPORARY DATASET IN TO A PHYSICAL PDS'
+          If ModuleType = "COBOLII " Then
+             MyScreen.PutString "CO", 8, 2
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString PrintFile + "                ", 14, 25
+             MyScreen.PutString "        ", 17, 25
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "/", 10, 38
+             MyScreen.PutString modulename, 17, 25
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<Pf3>"
+             MyScreen.WaitHostQuiet (1000)
+          Else
+             MyScreen.PutString "V", 8, 2
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (500)
+             MyScreen.PutString "CUT", 4, 16
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<Pf3>"
+             MyScreen.SendKeys "<Pf3>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "PROJ.FTPRINT.CPYBOOK.CHGFILE1                ", 10, 24
+             MyScreen.WaitHostQuiet (500)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "V", 8, 2
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "RES", 4, 16
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "D99999", 6, 2
+             MyScreen.WaitHostQuiet (500)
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.PutString "PASTE;QS", 4, 16
+             MyScreen.SendKeys "<enter>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<Pf3>"
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+          End If
+             MyScreen.PutString "=X", 4, 15
+             MyScreen.SendKeys "<enter>"
+             MyScreen.WaitHostQuiet (1000)
+             MyScreen.SendKeys "<Pf3>"
+             MyScreen.SendKeys "<Pf3>"
+       End If
+     Else
+       Sheets("Output Of the FtPrint Check").Cells(K + 4, 5).Value = Sheets("Impacted Elements").Cells(1, j).Value + "-->EITHER COPYBOOK OR NO IMPACTED MODULES ARE FOUND FOR THIS COPYBOOK."
+       K = K + 1
+       j = j + 1
+       i = 1
+       GoTo NEXT_COPYBOOK
+     End If
+     i = i + 1
+    Loop
+    If Sheets("Impacted Elements").Cells(i, j).Value <> "" & Sheets("Impacted Elements").Cells(2, j).Value = "" Then
+       buildOutputInd = "N"
+    Else
+       buildOutputInd = "y"
+    End If
+    If Skip_Ind = "N" And buildOutputInd = "y" Then
+       Call BuildOutput(j)
+       buildOutputInd = "N"
+    End If
+'Continue2:
+    j = j + 1
+    i = 1
+Loop
+'
+'**********************************************************************************
+'xxxxxxxxxxxxxxxxxxx<<<<<<<<< END OF PROGRAM >>>>>>>>>>xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+'**********************************************************************************
+Call MessageEOP
+End Sub
+'
+'**********************************************************************************
+'-------------------------------Build Output details-------------------------------
+'**********************************************************************************
+Public Function BuildOutput(j As Integer)
+         i = 1
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.PutString "START", 2, 18
+         MyScreen.SendKeys "<enter>"
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.PutString "TSO FTCOMPR", 2, 18
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.SendKeys "<enter>"
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.PutString Sheets("Impacted Elements").Cells(2, j).Value, 12, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(3, j).Value, 12, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(4, j).Value, 12, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(5, j).Value, 13, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(6, j).Value, 13, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(7, j).Value, 13, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(8, j).Value, 14, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(9, j).Value, 14, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(10, j).Value, 14, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(11, j).Value, 15, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(12, j).Value, 15, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(13, j).Value, 15, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(14, j).Value, 16, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(15, j).Value, 16, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(16, j).Value, 16, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(17, j).Value, 17, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(18, j).Value, 17, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(19, j).Value, 17, 60
+         MyScreen.PutString Sheets("Impacted Elements").Cells(20, j).Value, 18, 14
+         MyScreen.PutString Sheets("Impacted Elements").Cells(21, j).Value, 18, 37
+         MyScreen.PutString Sheets("Impacted Elements").Cells(22, j).Value, 18, 60
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.SendKeys "<enter>"
+         MyScreen.WaitHostQuiet (1000)
+         FTPRINTFILE = MyScreen.GetString(1, 10, 36)
+         MyScreen.SendKeys "<enter>"
+         MyScreen.SendKeys "<Pf3>"
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.PutString "START DL                                             ", 2, 15
+         MyScreen.SendKeys "<enter>"
+         MyScreen.WaitHostQuiet (1000)
+         'MsgBox FTPRINTFILE
+         MyScreen.PutString FTPRINTFILE, 10, 24
+         MyScreen.PutString "          ", 10, 60
+         MyScreen.SendKeys "<enter>"
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.PutString "B", 8, 2
+         MyScreen.WaitHostQuiet (1000)
+         MyScreen.SendKeys "<enter>"
+         
+         'Do While Cells(K, 4).Value <> " "
+         Do While i < 19
+              MyScreen.WaitHostQuiet (1000)
+              OUTSTR = MyScreen.GetString(i + 5, 34, 14)
+              'MsgBox OUTSTR
+              
+             If OUTSTR = "Bottom of Data" & i = 18 Then
+                 'press f8 to scrollup
+                 MyScreen.SendKeys "{HOME}"
+                 MyScreen.SendKeys "{F8}"
+              Else
+                  If OUTSTR <> "Bottom of Data" Then
+                     If MyScreen.GetString(i + 5, 18, 44) = "IS NOT COMPILED WITH LATEST COPYBOOK CHANGES" Then
+                         Sheets("Output Of the FtPrint Check").Cells(K + 4, 5).Value = MyScreen.GetString(i + 5, 8, 8) + "-->" + "FOOTPRINT MISMATCH FOR COPYBOOK " + Sheets("Impacted Elements").Cells(1, j).Value
+                         K = K + 1
+                     End If
+                  Else
+                     i = 20
+                  End If
+              End If
+              i = i + 1
+          Loop
+              
+        MyScreen.PutString "=X", 4, 15
+        MyScreen.SendKeys "<enter>"
+        MyScreen.SendKeys "<PF9>"
+        MyScreen.PutString "=X", 2, 15
+        MyScreen.SendKeys "<enter>"
+        MyScreen.SendKeys "<enter>"
+        MyScreen.SendKeys "<enter>"
+    
+End Function
+
+'
+'**********************************************************************************
+'----------------Create Inventory list for the entered copyooks--------------------
+'**********************************************************************************
+Public Function InventoryLst()
+'InventoryLst:
+'-------------
+Dim CBLBASEPDS As String
+Dim modulename As String
+Dim InvCol  As Integer
+Dim InvRow  As Integer
+Dim RowCount As Integer
+Dim i  As Integer
+Dim j  As Integer
+Dim b As Integer
+CBLBASEPDS = ""
+modulename = ""
+InvCol = 1
+InvRow = 1
+RowCount = 1
+i = 5
+j = 5
+a = 0
+b = 0
+
+Do While Cells(i, 4).Value <> ""
+   i = i + 1
+Loop
+b = i - 1 'TOTAL COUNT OF MODULES ENTERED
+a = i - 5
+'MsgBox a
+
+If (ComboBox2.Value = "PJA1") Or (ComboBox2.Value = "PJA2") Or (ComboBox2.Value = "PJA3") Or (ComboBox2.Value = "PJA4") Or (ComboBox2.Value = "PJB1") Or (ComboBox2.Value = "PJB2") Or (ComboBox2.Value = "PJB3") Or (ComboBox2.Value = "PJB4") Then
+       Region = "DEVELOP "
+       If Stage.Value = "DEVL" Then
+              REGION_STAGE = "D"
+          Else
+              REGION_STAGE = "U"
+       End If
+   Else
+       Region = "INTEG   "
+       REGION_STAGE = "I"
+       Stage.Value = "INT"
+End If
+'If InvInd = "Y" Then
+MyScreen.PutString "DL", 2, 15
+MyScreen.SendKeys "<enter>"
+MyScreen.WaitHostQuiet (1000)
+CBLBASEPDS = "A119.PP0136." + Stage.Value + "." + ComboBox2.Value + ".Base.COBOLII"
+MyScreen.PutString (CBLBASEPDS + "                  "), 10, 24
+MyScreen.SendKeys "<enter>"
+MyScreen.WaitHostQuiet (1000)
+MyScreen.PutString "B", 8, 2
+MyScreen.SendKeys "<enter>"
+MyScreen.WaitHostQuiet (1000)
+Do While j <= b
+   If Sheets("FOOTPRINT VERI. TOOL").Cells(j, 4).Value <> "" Then
+      MyScreen.WaitHostQuiet (1000)
+      modulename = (Cells(j, 4).Value)
+      MyScreen.PutString ("SRCHFOR " + "'" + "++INCLUDE " + modulename + "'"), 4, 15
+      MyScreen.WaitHostQuiet (1000)
+      MyScreen.SendKeys "<enter>"
+      'IF
+      '  MyScreen.PutString ("SRCHFOR " + "'" + "COPY " + modulename + "'"), 4, 15
+      'End If
+      MyScreen.SendKeys "<DOWN>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<RIGHT>"
+      MyScreen.SendKeys "<enter>"
+      MyScreen.WaitHostQuiet (1000)
+      Do While RowCount < "19"
+         If RowCount = "1" Then
+            Sheets("Impacted Elements").Cells(1, j - 4).Value = modulename
+            MyScreen.WaitHostQuiet (1000)
+         Else
+            If MyScreen.GetString(RowCount + 4, 21, 6) = "*Found" Then
+                  
+               Sheets("Impacted Elements").Cells(InvRow, InvCol).Value = MyScreen.GetString(RowCount + 4, 12, 8)
+                  
+               MyScreen.WaitHostQuiet (1000)
+            Else
+               RowCount = 19
+                  
+            End If
+            
+         End If
+         MyScreen.WaitHostQuiet (1000)
+         RowCount = RowCount + 1
+         InvRow = InvRow + 1
+      Loop
+      MyScreen.SendKeys "<HOME>"
+   End If
+   MyScreen.WaitHostQuiet (1000)
+   j = j + 1
+   InvCol = InvCol + 1
+   InvRow = 1
+   MyScreen.PutString "RES", 4, 15
+   MyScreen.SendKeys "<Enter>"
+   RowCount = 1
+   MyScreen.WaitHostQuiet (1000)
+Loop
+MyScreen.SendKeys "<PF3>"
+MyScreen.SendKeys "<PF3>"
+MyScreen.SendKeys "<PF3>"
+'GoTo Continue1
+'End If
+End Function
+
+Public Function MessageEOP()
+'**********************************************************************************
+'----------------------------------Message for EOP---------------------------------
+'**********************************************************************************
+'If InvInd = "N" Then
+   Sheets("Output Of the FtPrint Check").Range("E:E").Font.Bold = False
+   Sheets("Output Of the FtPrint Check").Range("E:E").Font.Color = vbBlack
+   Sheets("Output Of the FtPrint Check").Range("E:E").Characters(0, 8).Font.Bold = True
+   Sheets("Output Of the FtPrint Check").Range("E:E").Characters(0, 8).Font.Color = vbRed
+   MsgBox "FOOTPRINT HAS BEEN CHECKED. KINDLY VERIFY THE RESULTS." _
+          & vbNewLine & "  " _
+          & vbNewLine & "                                                    Thank You!!"
+'End If
+
+'Exit Function
+'**********************************************************************************
+'----------------------------------Message for EOP---------------------------------
+'**********************************************************************************
+
+'*****************End Routine**********************
+End Function
+
+Private Sub CommandButton21_Click()
+'Updateby Extendoffice 20161008
+Range("D5", "F26").Value = ""
+Range("J13").Value = ""
+Range("J15").Value = ""
+ComboBox2.Value = ""
+Stage.Value = ""
+Sheets("Output Of the FtPrint Check").Cells().Value = ""
+Sheets("Impacted Elements").Cells().Value = ""
+End Sub
+
